@@ -8,7 +8,9 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
+
 import java.net.InetSocketAddress;
 
 /**
@@ -34,12 +36,13 @@ public class NettyProxyServer {
 			         .channel(NioServerSocketChannel.class)
 			         .localAddress(new InetSocketAddress(port))
 			         .childHandler(new ChannelInitializer<SocketChannel>(){
-
 						@Override
 						protected void initChannel(SocketChannel ch)
 								throws Exception {
 							ChannelPipeline pipeline = ch.pipeline();
-							 pipeline.addLast("codec", new HttpServerCodec());
+							pipeline.addLast("codec", new HttpServerCodec());
+							pipeline.addLast("aggregator", new HttpObjectAggregator(1048576));
+							pipeline.addLast("handler", new NettyProxyServerHandler());
 						}});
 			ChannelFuture future = bootstrap.bind().sync(); 
 			future.channel().closeFuture().sync();
